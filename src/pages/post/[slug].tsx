@@ -17,6 +17,7 @@ import Comments from '../../components/Comments';
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
+
 interface Post {
   first_publication_date: string | null;
   last_publication_date: string | null;
@@ -38,6 +39,7 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  preview: boolean;
   previousPost: null |{
     uid: string;
     title: string;
@@ -48,7 +50,7 @@ interface PostProps {
   };
 }
 
-export default function Post({ post, previousPost, nextPost }: PostProps) {
+export default function Post({ post, preview, previousPost, nextPost }: PostProps) {
   // TODO  
   const { isFallback } = useRouter(); 
 
@@ -149,7 +151,10 @@ export default function Post({ post, previousPost, nextPost }: PostProps) {
 
             <Comments />
 
-            <button className={commonStyles.preview} type="button">Sair do modo Preview</button>
+            {preview && (
+              <a className={commonStyles.preview} href="/api/exit-preview">Sair do modo Preview</a>
+            )}
+
           </footer>
         </>
       }
@@ -175,11 +180,16 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 };
 
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps<PostProps> = async ({ 
+  params, 
+  preview = false,
+  previewData,
+ }) => {
   const { slug } = params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('posts', String(slug), {});
+  const response = await prismic.getByUID('posts', String(slug), {
+    ref: previewData?.ref ?? null,
+  });
 
   const content = response.data.content.map((content) => {
       return {
@@ -204,7 +214,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   }
   
   const posts = await prismic.query(
-    Prismic.predicates.at('document.type', 'posts')
+    Prismic.predicates.at('document.type', 'posts'),{
+      ref: previewData?.ref ?? null,
+    }
   );
 
   const postsList = posts.results.map(result => {
@@ -213,6 +225,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       title: result.data.title,
     }
   });
+
 
   let index;
 
@@ -242,6 +255,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   return {
     props: {
       post,
+      preview,
       previousPost,
       nextPost
     }
