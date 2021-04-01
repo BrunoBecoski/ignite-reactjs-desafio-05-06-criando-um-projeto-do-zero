@@ -105,6 +105,10 @@ export default function Home({ postsPagination }: HomeProps) {
           }
         </div>
       </main>
+      
+      <div className={commonStyles.footer}>
+        <button className={commonStyles.preview} type="button">Sair do modo Preview</button>
+      </div>
     </>
   )
 }
